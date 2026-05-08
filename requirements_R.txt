@@ -3,6 +3,7 @@ dplyr
 zoo
 TTR
 randomForest
+xgboost
 pROC
 PRROC
 ggplot2

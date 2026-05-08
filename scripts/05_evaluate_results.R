@@ -63,7 +63,8 @@ evaluate_model <- function(actual, prob, model_name) {
 
 summary_table <- rbind(
   evaluate_model(preds$actual, preds$logit_prob, "Logistic Regression"),
-  evaluate_model(preds$actual, preds$rf_prob, "Random Forest")
+  evaluate_model(preds$actual, preds$rf_prob, "Random Forest"),
+  evaluate_model(preds$actual, preds$xgb_prob, "XGBoost")
 )
 
 dir.create("outputs/tables", recursive = TRUE, showWarnings = FALSE)

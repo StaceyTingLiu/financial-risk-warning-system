@@ -1,8 +1,11 @@
 
+# 04_walkforward_models.R
 # Leakage-safe walk-forward model training
+# Models: Logistic Regression, Random Forest, XGBoost
 
 library(dplyr)
 library(randomForest)
+library(xgboost)
 
 dataset <- read.csv("data/processed/model_dataset.csv")
 dataset$date <- as.Date(dataset$date)
@@ -40,6 +43,9 @@ for (start_idx in seq(initial_train_size, nrow(dataset) - test_window, by = test
   train_mean <- sapply(x_train, mean, na.rm = TRUE)
   train_sd <- sapply(x_train, sd, na.rm = TRUE)
   
+  # Avoid division by zero
+  train_sd[train_sd == 0] <- 1
+  
   x_train_scaled <- as.data.frame(scale(x_train, center = train_mean, scale = train_sd))
   x_test_scaled <- as.data.frame(scale(x_test, center = train_mean, scale = train_sd))
   
@@ -53,7 +59,9 @@ for (start_idx in seq(initial_train_size, nrow(dataset) - test_window, by = test
     x_test_scaled
   )
   
+  # -----------------------------
   # Model 1: Logistic Regression
+  # -----------------------------
   logit_model <- glm(
     stress_event_21 ~ .,
     data = train_model_df,
@@ -66,7 +74,9 @@ for (start_idx in seq(initial_train_size, nrow(dataset) - test_window, by = test
     type = "response"
   )
   
+  # -----------------------------
   # Model 2: Random Forest
+  # -----------------------------
   rf_model <- randomForest(
     as.factor(stress_event_21) ~ .,
     data = train_model_df,
@@ -79,11 +89,49 @@ for (start_idx in seq(initial_train_size, nrow(dataset) - test_window, by = test
     type = "prob"
   )[, 2]
   
+  # -----------------------------
+  # Model 3: XGBoost
+  # -----------------------------
+  xgb_train <- xgb.DMatrix(
+    data = as.matrix(x_train_scaled),
+    label = y_train
+  )
+  
+  xgb_test <- xgb.DMatrix(
+    data = as.matrix(x_test_scaled),
+    label = y_test
+  )
+  
+  xgb_params <- list(
+    objective = "binary:logistic",
+    eval_metric = "logloss",
+    max_depth = 3,
+    eta = 0.05,
+    subsample = 0.8,
+    colsample_bytree = 0.8
+  )
+  
+  xgb_model <- xgb.train(
+    params = xgb_params,
+    data = xgb_train,
+    nrounds = 100,
+    verbose = 0
+  )
+  
+  xgb_prob <- predict(
+    xgb_model,
+    newdata = xgb_test
+  )
+  
+  # -----------------------------
+  # Save fold results
+  # -----------------------------
   fold_results <- data.frame(
     date = test_data$date,
     actual = y_test,
     logit_prob = logit_prob,
     rf_prob = rf_prob,
+    xgb_prob = xgb_prob,
     train_end_date = train_data$date[nrow(train_data)]
   )
   
@@ -103,3 +151,4 @@ write.csv(
 cat("Walk-forward model predictions saved successfully.\n")
 cat("Output file: outputs/tables/walkforward_predictions.csv\n")
 cat("Number of prediction rows:", nrow(results), "\n")
+cat("Models included: Logistic Regression, Random Forest, XGBoost\n")
