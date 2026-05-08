@@ -28,8 +28,14 @@ preds$risk_regime <- cut(
   labels = c("Low", "Medium", "High")
 )
 
+# Force order for legend/colors
+preds$risk_regime <- factor(
+  preds$risk_regime,
+  levels = c("Low", "Medium", "High")
+)
+
 # -----------------------------
-# 3. Save alert outputs
+# 3. Save outputs
 # -----------------------------
 dir.create("outputs/alerts", recursive = TRUE, showWarnings = FALSE)
 dir.create("outputs/tables", recursive = TRUE, showWarnings = FALSE)
@@ -52,7 +58,7 @@ write.csv(
 )
 
 # -----------------------------
-# 4. Helper: force opaque white PNG
+# 4. Helper: save readable PNG
 # -----------------------------
 save_plot_png <- function(plot_obj, filename, width = 14, height = 7, res = 300) {
   if (capabilities("cairo")) {
@@ -81,7 +87,7 @@ save_plot_png <- function(plot_obj, filename, width = 14, height = 7, res = 300)
 }
 
 # -----------------------------
-# 5. Common theme for readability
+# 5. Common theme
 # -----------------------------
 my_theme <- theme_bw(base_size = 18) +
   theme(
@@ -91,29 +97,37 @@ my_theme <- theme_bw(base_size = 18) +
     axis.text = element_text(size = 14, color = "black"),
     legend.title = element_text(size = 15, face = "bold", color = "black"),
     legend.text = element_text(size = 14, color = "black"),
-    legend.position = "top",
+    legend.position = "right",
     panel.background = element_rect(fill = "white", color = "black"),
     plot.background = element_rect(fill = "white", color = "white"),
     legend.background = element_rect(fill = "white", color = "white"),
     legend.key = element_rect(fill = "white", color = "white"),
-    panel.grid.major = element_line(color = "grey80", linewidth = 0.7),
-    panel.grid.minor = element_line(color = "grey90", linewidth = 0.4),
+    panel.grid.major = element_line(color = "grey85", linewidth = 0.7),
+    panel.grid.minor = element_line(color = "grey92", linewidth = 0.4),
     axis.line = element_line(color = "black", linewidth = 0.6)
   )
+
+# Set common y-axis upper bound
+ymax <- max(0.75, max(preds$risk_score, na.rm = TRUE))
 
 # -----------------------------
 # 6. Figure 1: Risk score timeline
 # -----------------------------
 p1 <- ggplot(preds, aes(x = date, y = risk_score)) +
-  geom_line(color = "navy", linewidth = 0.9) +
-  geom_hline(yintercept = 0.66, color = "red", linetype = "dashed", linewidth = 0.9) +
+  geom_line(color = "steelblue4", linewidth = 1.0) +
+  geom_hline(
+    yintercept = 0.66,
+    color = "firebrick",
+    linetype = "dashed",
+    linewidth = 0.9
+  ) +
   labs(
     title = "Financial Risk Early-Warning Score",
     subtitle = "Random Forest predicted probability of future 21-day stress event",
     x = "Date",
     y = "Predicted Stress Probability"
   ) +
-  scale_y_continuous(limits = c(0, max(0.75, max(preds$risk_score, na.rm = TRUE)))) +
+  scale_y_continuous(limits = c(0, ymax)) +
   my_theme
 
 save_plot_png(
@@ -128,12 +142,14 @@ save_plot_png(
 # 7. Figure 2: Risk regime classification
 # -----------------------------
 p2 <- ggplot(preds, aes(x = date, y = risk_score, color = risk_regime)) +
-  geom_point(size = 2.2, alpha = 0.85) +
-  scale_color_manual(values = c(
-    "Low" = "darkgreen",
-    "Medium" = "darkorange",
-    "High" = "red3"
-  )) +
+  geom_point(size = 2.3, alpha = 0.85) +
+  scale_color_manual(
+    values = c(
+      "Low" = "forestgreen",
+      "Medium" = "darkorange",
+      "High" = "red3"
+    )
+  ) +
   labs(
     title = "Risk Regime Classification",
     subtitle = "Low / Medium / High market-stress monitoring regimes",
@@ -141,7 +157,7 @@ p2 <- ggplot(preds, aes(x = date, y = risk_score, color = risk_regime)) +
     y = "Risk Score",
     color = "Risk Regime"
   ) +
-  scale_y_continuous(limits = c(0, max(0.75, max(preds$risk_score, na.rm = TRUE)))) +
+  scale_y_continuous(limits = c(0, ymax)) +
   my_theme
 
 save_plot_png(
@@ -159,7 +175,7 @@ event_points <- preds %>%
   filter(actual == 1)
 
 p3 <- ggplot(preds, aes(x = date, y = risk_score)) +
-  geom_line(color = "navy", linewidth = 0.9) +
+  geom_line(color = "darkcyan", linewidth = 1.0) +
   geom_point(
     data = event_points,
     aes(x = date, y = risk_score),
@@ -173,7 +189,7 @@ p3 <- ggplot(preds, aes(x = date, y = risk_score)) +
     x = "Date",
     y = "Risk Score"
   ) +
-  scale_y_continuous(limits = c(0, max(0.75, max(preds$risk_score, na.rm = TRUE)))) +
+  scale_y_continuous(limits = c(0, ymax)) +
   my_theme
 
 save_plot_png(
