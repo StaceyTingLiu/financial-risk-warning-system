@@ -64,10 +64,11 @@ The system follows several leakage-safe principles:
 
 ## Models
 
-The first version includes:
+The current version includes:
 
 - Logistic Regression
 - Random Forest
+- XGBoost
 
 Future extensions may include:
 
