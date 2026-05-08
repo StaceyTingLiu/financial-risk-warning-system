@@ -1,4 +1,4 @@
 "model","roc_auc","pr_auc","threshold_90pct","hit_rate","precision","false_alarm_rate","total_alerts","true_positives","false_positives","false_negatives","true_negatives"
 "Logistic Regression",0.5283,0.0429,0.1741,0.0811,0.0337,0.1018,89,3,86,34,759
-"Random Forest",0.634,0.1024,0.2297,0.3243,0.1348,0.0911,89,12,77,25,768
-"XGBoost",0.6435,0.1088,0.1967,0.1081,0.0449,0.1006,89,4,85,33,760
+"Random Forest",0.6254,0.102,0.23,0.2703,0.1111,0.0947,90,10,80,27,765
+"XGBoost",0.6447,0.1137,0.2101,0.2703,0.1124,0.0935,89,10,79,27,766
